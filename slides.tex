@@ -3,24 +3,95 @@
 \title{Solving Data-flow Problems in Syntax Trees}
 \date{September 9, 2017}
 
+\input{defs.tex}
+
 \begin{document}
-  \maketitle
 
-  \begin{frame}{Introduction}
-    \begin{itemize}
-      \item My master's thesis\footnote{\tiny\url{https://pp.ipd.kit.edu/uploads/publikationen/graf17masterarbeit.pdf}}: Call Arity vs. Demand Analysis
-        \begin{itemize}
-          \item Result: Usage Analysis generalising Call Arity
-          \item Precision of Call Arity without co-call graphs
-        \end{itemize}
-      \item Requirements led to complex analysis order
-      \item \emph{Specification} of data-flow problem decoupled from its \emph{solution}
-    \end{itemize}
-  \end{frame}
+\maketitle
 
-  \begin{frame}{Strictness Analysis}
-    \begin{itemize}
-      \item \hs{hi}
-    \end{itemize}
-  \end{frame}
+\begin{frame}{Introduction}
+  \begin{itemize}
+    \item My master's thesis\footnote{\tiny\url{https://pp.ipd.kit.edu/uploads/publikationen/graf17masterarbeit.pdf}}: Call Arity vs. Demand Analysis
+      \begin{itemize}
+        \item Result: Usage Analysis generalising Call Arity
+        \item Precision of Call Arity without co-call graphs
+      \end{itemize}
+    \item Requirements led to complex analysis order
+    \item \emph{Specification} of data-flow problem decoupled from its \emph{solution}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Strictness Analysis}
+  \begin{itemize}
+    \item Provides lower bounds on \emph{evaluation cardinality}
+    \item Which variables are evaluated at least once?
+      \begin{itemize}
+        \item[$S$] Strict (Yes!)
+        \item[$L$] Lazy (Not sure)
+      \end{itemize}
+    \item Enables call-by-value, unboxing
+  \end{itemize}
+  \begin{overprint}
+    \onslide<1>
+    \begin{center}
+      \begin{minipage}{0.5\textwidth}
+        \begin{haskell}
+          main = do
+            let  x = ... -- $S$
+            let  y = ... -- $S$
+            let  z = ... -- $L$
+            print (x + if odd y then y else z)
+        \end{haskell}
+      \end{minipage}
+    \end{center}
+    \onslide<2>
+    \begin{center}
+      \begin{minipage}{0.5\textwidth}
+        \begin{haskell}
+          main = do
+            let !x = ... -- $S$
+            let !y = ... -- $S$
+            let  z = ... -- $L$
+            print (x + if odd y then y else z)
+        \end{haskell}
+      \end{minipage}
+    \end{center}
+  \end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]{GHC's Demand Analyser}
+  \begin{itemize}
+    \item Performs strictness analysis (among other things)
+    \item Fuels Worker/Wrapper transformation
+    \item Backward analysis
+      \begin{itemize}
+        \item Which strictness does an expression place on its free variables?
+        \item Which strictness does a function place its arguments?
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Strictness Signatures}
+  \begin{itemize}
+    \item Interprocedural data-flow
+    \item Looks at the right-hand side of \hs{const} before the \hs{let} body!
+    \item \emph{Strictness type}: $\sStrType = \lPair{\sFVs \pfun \sStr}{\sStrSig}$
+    \item \emph{Unleashes} usage type of \hs{const}'s RHS at call sites
+  \end{itemize}
+  \begin{center}
+    \begin{minipage}{0.8\textwidth}
+      \begin{haskell}
+        let const a b = a -- $\mathtt{const} :: \lPair{\emptymap}{S \to L \to \bullet}$
+        in const 
+            y             -- $S$
+            (fac 1000)    -- $L$
+      \end{haskell}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Call Context Matters}
+\end{frame}
+  
+\section{End}
 \end{document}
