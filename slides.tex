@@ -1,13 +1,26 @@
-\documentclass{beamer}
-\usetheme{metropolis}           % Use metropolis theme
-\title{A minimal example}
-\date{\today}
-\author{Matthias Vogelgesang}
-\institute{Centre for Modern Beamer Themes}
+\documentclass{haskellbeamer}
+
+\title{Solving Data-flow Problems in Syntax Trees}
+\date{September 9, 2017}
+
 \begin{document}
   \maketitle
-  \section{First Section}
-  \begin{frame}{First Frame}
-    Hello, world!
+
+  \begin{frame}{Introduction}
+    \begin{itemize}
+      \item My master's thesis\footnote{\tiny\url{https://pp.ipd.kit.edu/uploads/publikationen/graf17masterarbeit.pdf}}: Call Arity vs. Demand Analysis
+        \begin{itemize}
+          \item Result: Usage Analysis generalising Call Arity
+          \item Precision of Call Arity without co-call graphs
+        \end{itemize}
+      \item Requirements led to complex analysis order
+      \item \emph{Specification} of data-flow problem decoupled from its \emph{solution}
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}{Strictness Analysis}
+    \begin{itemize}
+      \item \hs{hi}
+    \end{itemize}
   \end{frame}
 \end{document}
