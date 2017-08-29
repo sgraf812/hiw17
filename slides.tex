@@ -192,7 +192,7 @@
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{Recursive Example}
+\begin{frame}[fragile]{Example}
   \begin{itemize}
     \item Allocate nodes to break recursion
       \begin{itemize}
@@ -206,11 +206,10 @@
     \begin{columns}
       \begin{column}{0.35\textwidth}
         \begin{haskell}
-          let even 0 = True
-              even n = odd (n-1)
-              odd 0 = False
-              odd n = even (n-1)
-          in even 12
+          let f 0 = const 0
+              f 1 = id 
+              f n = f (n `mod` 2)
+          in f y z
         \end{haskell}
       \end{column}
       \begin{column}{0.02\textwidth}
@@ -218,7 +217,7 @@
       \end{column}
       \begin{column}{0.4\textwidth}
         \begin{tikzpicture}[->, thick]
-          \useasboundingbox (-1,-2) rectangle (4,2);
+          \useasboundingbox (-1,-1.5) rectangle (4,1.5);
           \tikzstyle{n}=[%
             fill=white,
             draw,
@@ -230,13 +229,10 @@
             [label={[visible on=<4>]above:$\bot$}]
             {$\dfnode{<root>}{0}$};
           \foreach \i in {-0.05,0,0.05} {
-            \node[n, visible on=<2->] at (3,1.5) (evenx) 
-              [xshift=\i cm, yshift=-\i cm] {$\dfnode{even}{n}$};
-            \node[n, visible on=<2->] at (3,-1.5) (oddx) 
-              [xshift=\i cm, yshift=-\i cm] {$\dfnode{odd}{n}$};
+            \node[n, visible on=<2->] at (3,0) (fx) 
+              [xshift=\i cm, yshift=-\i cm] {$\dfnode{f}{n}$};
           }
-          \node[visible on=<4>] at ([shift={(90:1.1)}]evenx) {$\bot$};
-          \node[visible on=<4>] at ([shift={(270:1.1)}]oddx) {$\bot$};
+          \node[visible on=<4>] at ([shift={(90:1.1)}]fx) {$\bot$};
         \end{tikzpicture}
       \end{column}
     \end{columns}
@@ -252,16 +248,15 @@
   \end{overprint}
 \end{frame}
 
-\begin{frame}[fragile]{Recursive Example}
+\begin{frame}[fragile]{Example}
   \begin{overprint}
     \begin{columns}
       \begin{column}{0.35\textwidth}
         \begin{haskell}
-          let even 0 = True
-              even n = odd (n-1)
-              odd 0 = False
-              odd n = even (n-1)
-          in even 12
+          let f 0 = const 0
+              f 1 = id 
+              f n = f (n `mod` 2)
+          in f y z
         \end{haskell}
       \end{column}
       \begin{column}{0.02\textwidth}
@@ -269,6 +264,7 @@
       \end{column}
       \begin{column}{0.4\textwidth}
         \begin{tikzpicture}[->, thick]
+          \useasboundingbox (-1,-2) rectangle (4,2);
           \tikzstyle{n}=[%
             fill=white,
             draw,
@@ -276,30 +272,21 @@
             inner sep=0pt,
             minimum size=1.5cm
           ]
-          \node[n] at (0,0) (root) [hl={<2-10>}, align=center] 
-            [label={[visible on=<-9>]above:$\bot$},
-             label={[visible on=<10->]above:$[]$}]
+          \node[n] at (0,0) (root) [hl={<2-7>}] 
+            [label={[visible on=<-6>]above:$\bot$},
+             label={[visible on=<7->]above:$\lPair{\alert<7,11>{\left[\mathtt{x} \mapsto S, \mathtt{y} \mapsto L\right]}}{[]}$}]
             {$\dfnode{<root>}{0}$};
           \foreach \i in {-0.05,0,0.05} {
-            \node<-2>[n] at (3,1.5) (evenx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{even}{n}$};
-            \node<-3>[n] at (3,-1.5) (oddx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{odd}{n}$};
+            \node<-2>[n] at (3,0) (fx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{f}{n}$};
           }
-          \setcounter{beamerpauses}{3}
-          \draw<3-> (root) edge [bend left, hl={<3,8>}] (even);
-          \node[n, visible on=<3->, hl={<3-8,13>}] 
-            at (3,1.5) (even) 
-            [label={[visible on=<-5>]above:$\bot$},
-             label={[visible on=<6-7>]above:$\bot=[S]$},
-             label={[visible on=<8->]above:$[S]$}]
-            {$\dfnode{even}{1}$};
-          \draw<4-> (even) edge [bend left, hl={<4,7>}] (odd);
-          \node[n, visible on=<4->, hl={<4-7,9,12-14>}] 
-            at (3,-1.5) (odd) 
-            [label={[visible on=<-6>]below:$\bot$},
-             label={[visible on=<7->]below:$[S]$}] 
-            {$\dfnode{odd}{1}$};
-          \draw<5-> (odd) edge [bend left, hl={<5-6,13>}] (even);
-          \draw<9-> (root) edge [bend right, dashed, hl={<9>}] (odd);
+          \draw<3-> (root) edge [hl={<3,6>}] (f2);
+          \node[n, visible on=<3->, hl={<3-6,9-10>}] 
+            at (3,0) (f2) 
+            [label={[visible on=<-4>]above:$\bot$},
+             label={[visible on=<5>]above:$\bot=\lPair{\emptymap}{[S,S]}$},
+             label={[visible on=<6->]above:$\lPair{\emptymap}{[S,\alert<6>{L}]}$}]
+            {$\dfnode{f}{2}$};
+          \draw<4-> (f2) edge [loop, in=-110, out=-70, looseness=5, hl={<4-5,10>}] (f2);
         \end{tikzpicture}
       \end{column}
     \end{columns}
@@ -308,7 +295,7 @@
         \hfill Worklist:
       \end{column}
       \begin{column}{0.55\textwidth}
-        \only<1>{$\{\alert{\dfnode{<root>}{0}}\}$}\only<2-5>{$\{\}$}\only<6-11>{$\{\alert<11>{\dfnode{odd}{1}}\}$}\only<12->{$\{\}$}
+        \only<1>{$\{\alert{\dfnode{<root>}{0}}\}$}\only<2-4>{$\{\}$}\only<5-8>{$\{\alert<5,8>{\dfnode{f}{2}}\}$}\only<9->{$\{\}$}
       \end{column}
     \end{columns}
   \end{overprint}
