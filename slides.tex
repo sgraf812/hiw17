@@ -192,33 +192,126 @@
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{Example}
+\begin{frame}[fragile]{Recursive Example}
   \begin{itemize}
-    \item Allocate one top-level node + one node per \hs{let} binding
+    \item Allocate nodes to break recursion
+      \begin{itemize}
+        \item One top-level node
+        \item One node per pair of $(\text{\hs{let} binding}, \text{incoming arity})$
+      \end{itemize}
+    \item Initialise worklist to top-level node
+    \item Initialise nodes with $\bot$
   \end{itemize}
-  \begin{columns}
-    \begin{column}{0.35\textwidth}
-      \begin{haskell}
-        let even 0 = True
-            even n = odd (n-1)
-            odd 0 = False
-            odd n = even (n-1)
-        in even 12
-      \end{haskell}
-    \end{column}
-    \begin{column}{0.05\textwidth}
-      {\Huge$\Rightarrow$}
-    \end{column}
-    \begin{column}{0.35\textwidth}
-      \begin{tikzpicture}
-        \node at (0,0) (root) {\texttt{<root>}};
-        \node at (1,0.5) (even) {\texttt{even}};
-        \node at (1,-0.5) (odd) {\texttt{odd}};
-        \draw (root) -> (even) -- (odd);
-      \end{tikzpicture}
-    \end{column}
-  \end{columns}
-    
+  \begin{overprint}
+    \begin{columns}
+      \begin{column}{0.35\textwidth}
+        \begin{haskell}
+          let even 0 = True
+              even n = odd (n-1)
+              odd 0 = False
+              odd n = even (n-1)
+          in even 12
+        \end{haskell}
+      \end{column}
+      \begin{column}{0.02\textwidth}
+        {\Huge$\Rightarrow$}
+      \end{column}
+      \begin{column}{0.4\textwidth}
+        \begin{tikzpicture}[->, thick]
+          \useasboundingbox (-1,-2) rectangle (4,2);
+          \tikzstyle{n}=[%
+            fill=white,
+            draw,
+            circle,
+            inner sep=0pt,
+            minimum size=1.5cm
+          ]
+          \node[n] at (0,0) (root) 
+            [label={[visible on=<4>]above:$\bot$}]
+            {$\dfnode{<root>}{0}$};
+          \foreach \i in {-0.05,0,0.05} {
+            \node[n, visible on=<2->] at (3,1.5) (evenx) 
+              [xshift=\i cm, yshift=-\i cm] {$\dfnode{even}{n}$};
+            \node[n, visible on=<2->] at (3,-1.5) (oddx) 
+              [xshift=\i cm, yshift=-\i cm] {$\dfnode{odd}{n}$};
+          }
+          \node[visible on=<4>] at ([shift={(90:1.1)}]evenx) {$\bot$};
+          \node[visible on=<4>] at ([shift={(270:1.1)}]oddx) {$\bot$};
+        \end{tikzpicture}
+      \end{column}
+    \end{columns}
+    \onslide<3->
+    \begin{columns}
+      \begin{column}{0.55\textwidth}
+        \hfill Worklist:
+      \end{column}
+      \begin{column}{0.55\textwidth}
+        $\{\dfnode{<root>}{0}\}$ \hfill
+      \end{column}
+    \end{columns}
+  \end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]{Recursive Example}
+  \begin{overprint}
+    \begin{columns}
+      \begin{column}{0.35\textwidth}
+        \begin{haskell}
+          let even 0 = True
+              even n = odd (n-1)
+              odd 0 = False
+              odd n = even (n-1)
+          in even 12
+        \end{haskell}
+      \end{column}
+      \begin{column}{0.02\textwidth}
+        {\Huge$\Rightarrow$}
+      \end{column}
+      \begin{column}{0.4\textwidth}
+        \begin{tikzpicture}[->, thick]
+          \tikzstyle{n}=[%
+            fill=white,
+            draw,
+            circle,
+            inner sep=0pt,
+            minimum size=1.5cm
+          ]
+          \node[n] at (0,0) (root) [hl={<2-10>}, align=center] 
+            [label={[visible on=<-9>]above:$\bot$},
+             label={[visible on=<10->]above:$[]$}]
+            {$\dfnode{<root>}{0}$};
+          \foreach \i in {-0.05,0,0.05} {
+            \node<-2>[n] at (3,1.5) (evenx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{even}{n}$};
+            \node<-3>[n] at (3,-1.5) (oddx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{odd}{n}$};
+          }
+          \setcounter{beamerpauses}{3}
+          \draw<3-> (root) edge [bend left, hl={<3,8>}] (even);
+          \node[n, visible on=<3->, hl={<3-8,13>}] 
+            at (3,1.5) (even) 
+            [label={[visible on=<-5>]above:$\bot$},
+             label={[visible on=<6-7>]above:$\bot=[S]$},
+             label={[visible on=<8->]above:$[S]$}]
+            {$\dfnode{even}{1}$};
+          \draw<4-> (even) edge [bend left, hl={<4,7>}] (odd);
+          \node[n, visible on=<4->, hl={<4-7,9,12-14>}] 
+            at (3,-1.5) (odd) 
+            [label={[visible on=<-6>]below:$\bot$},
+             label={[visible on=<7->]below:$[S]$}] 
+            {$\dfnode{odd}{1}$};
+          \draw<5-> (odd) edge [bend left, hl={<5-6,13>}] (even);
+          \draw<9-> (root) edge [bend right, dashed, hl={<9>}] (odd);
+        \end{tikzpicture}
+      \end{column}
+    \end{columns}
+    \begin{columns}
+      \begin{column}{0.55\textwidth}
+        \hfill Worklist:
+      \end{column}
+      \begin{column}{0.55\textwidth}
+        \only<1>{$\{\alert{\dfnode{<root>}{0}}\}$}\only<2-5>{$\{\}$}\only<6-11>{$\{\alert<11>{\dfnode{odd}{1}}\}$}\only<12->{$\{\}$}
+      \end{column}
+    \end{columns}
+  \end{overprint}
 \end{frame}
 
 \section{End}

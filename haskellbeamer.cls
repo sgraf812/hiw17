@@ -30,6 +30,23 @@
 \RequirePackage{hypcap} % hyperref fix
 \RequirePackage[nameinlink,noabbrev,capitalise]{cleveref} % better references
 
+%%% TikZ libraries
+
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{pgffor}
+
+% overlays
+\tikzset{
+  invisible/.style={opacity=0,text opacity=0},
+  visible on/.style={alt={#1{}{invisible}}},
+  alt/.code args={<#1>#2#3}{%
+    \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+  },
+  hl/.code args={<#1>}{% highlight stuff
+    \alt<#1>{\pgfkeysalso{draw=alerted text.fg}}{\pgfkeysalso{}} % \pgfkeysalso doesn't change the path
+  },
+}
+
 %%% Typographic defs
 
 % From https://stackoverflow.com/a/39363004/388010
@@ -56,3 +73,7 @@
 
 \newmintinline[hs]{haskell}{}
 \newminted[haskell]{haskell}{linenos,mathescape,texcomments,autogobble}
+
+%%% Data-flow nodes
+
+\newcommand{\dfnode}[2]{\text{$\text{\texttt{#1}}_{#2}$}}
