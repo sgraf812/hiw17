@@ -3,6 +3,7 @@
 \title{Solving Data-flow Problems in Syntax Trees}
 \date{September 9, 2017}
 
+\bibliography{bibliography.bib}
 \input{defs.tex}
 
 \begin{document}
@@ -24,17 +25,18 @@
 \begin{frame}[fragile]{Strictness Analysis}
   \begin{itemize}
     \item Provides lower bounds on \emph{evaluation cardinality}
-    \item Which variables are evaluated at least once?
+    \item Is this variable evaluated at least once?
       \begin{itemize}
-        \item[$S$] Strict (Yes!)
-        \item[$L$] Lazy (Not sure)
+        \item \emph{Strictness}: $\sStr \Coloneqq S \mid L$
+        \item $S$trict (Yes!)
+        \item $L$azy (Not sure)
       \end{itemize}
     \item Enables call-by-value, unboxing
   \end{itemize}
-  \begin{overprint}
-    \onslide<1>
-    \begin{center}
-      \begin{minipage}{0.5\textwidth}
+  \begin{center}
+    \begin{minipage}{0.7\textwidth}
+      \begin{overprint}
+        \onslide<1>
         \begin{haskell}
           main = do
             let  x = ... -- $S$
@@ -42,11 +44,7 @@
             let  z = ... -- $L$
             print (x + if odd y then y else z)
         \end{haskell}
-      \end{minipage}
-    \end{center}
-    \onslide<2>
-    \begin{center}
-      \begin{minipage}{0.5\textwidth}
+        \onslide<2>
         \begin{haskell}
           main = do
             let !x = ... -- $S$
@@ -54,9 +52,9 @@
             let  z = ... -- $L$
             print (x + if odd y then y else z)
         \end{haskell}
-      \end{minipage}
-    \end{center}
-  \end{overprint}
+      \end{overprint}
+    \end{minipage}
+  \end{center}
 \end{frame}
 
 \begin{frame}[fragile]{GHC's Demand Analyser}
@@ -66,7 +64,7 @@
     \item Backward analysis
       \begin{itemize}
         \item Which strictness does an expression place on its free variables?
-        \item Which strictness does a function place its arguments?
+        \item Which strictness does a function place on its arguments?
       \end{itemize}
     \item \emph{Strictness type}: $\sStrType = \lPair{\sFVs \pfun \sStr}{\sStr^*}$
   \end{itemize}
@@ -79,12 +77,12 @@
   \end{itemize}
   \begin{center}
     \begin{minipage}{0.8\textwidth}
-      \begin{haskell}
+      \begin{haskell*}{escapeinside=||}
         let const a b = a -- $\mathtt{const} :: \lPair{\emptymap}{[S, L]}$
         in const 
-            y             -- $S$
-            (fac 1000)    -- $L$
-      \end{haskell}
+            y            -- $S$
+            (error |\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\includegraphics[width=3.85mm]{bomb.png}}\PYG{l+s}{\PYGZdq{}}|) -- $L$
+      \end{haskell*}
     \end{minipage}
   \end{center}
 \end{frame}
@@ -177,7 +175,7 @@
     \item Exploit laziness to memoise approximations?
     \item[\xmark] Recursion leads to termination problems
     \item Rediscovered fixed-point iteration, detached from the syntax tree
-    \item Leads to data-flow network, solved by worklist algorithm
+    \item Leads to data-flow framework, solved by worklist algorithm
   \end{itemize}
   \begin{center}
     \begin{minipage}{0.5\textwidth}
@@ -192,7 +190,7 @@
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{Example}
+\begin{frame}[fragile]{Data-flow Framework for Strictness Analysis}
   \begin{itemize}
     \item Allocate nodes to break recursion
       \begin{itemize}
@@ -209,7 +207,7 @@
           let f 0 = const 0
               f 1 = id 
               f n = f (n `mod` 2)
-          in f y z
+          in f x y
         \end{haskell}
       \end{column}
       \begin{column}{0.02\textwidth}
@@ -218,13 +216,6 @@
       \begin{column}{0.4\textwidth}
         \begin{tikzpicture}[->, thick]
           \useasboundingbox (-1,-1.5) rectangle (4,1.5);
-          \tikzstyle{n}=[%
-            fill=white,
-            draw,
-            circle,
-            inner sep=0pt,
-            minimum size=1.5cm
-          ]
           \node[n] at (0,0) (root) 
             [label={[visible on=<4>]above:$\bot$}]
             {$\dfnode{<root>}{0}$};
@@ -248,7 +239,7 @@
   \end{overprint}
 \end{frame}
 
-\begin{frame}[fragile]{Example}
+\begin{frame}[fragile]{Data-flow Framework for Strictness Analysis}
   \begin{overprint}
     \begin{columns}
       \begin{column}{0.35\textwidth}
@@ -256,7 +247,7 @@
           let f 0 = const 0
               f 1 = id 
               f n = f (n `mod` 2)
-          in f y z
+          in f x y
         \end{haskell}
       \end{column}
       \begin{column}{0.02\textwidth}
@@ -265,13 +256,6 @@
       \begin{column}{0.4\textwidth}
         \begin{tikzpicture}[->, thick]
           \useasboundingbox (-1,-2) rectangle (4,2);
-          \tikzstyle{n}=[%
-            fill=white,
-            draw,
-            circle,
-            inner sep=0pt,
-            minimum size=1.5cm
-          ]
           \node[n] at (0,0) (root) [hl={<2-7>}] 
             [label={[visible on=<-6>]above:$\bot$},
              label={[visible on=<7->]above:$\lPair{\alert<7,11>{\left[\mathtt{x} \mapsto S, \mathtt{y} \mapsto L\right]}}{[]}$}]
@@ -295,11 +279,203 @@
         \hfill Worklist:
       \end{column}
       \begin{column}{0.55\textwidth}
-        \only<1>{$\{\alert{\dfnode{<root>}{0}}\}$}\only<2-4>{$\{\}$}\only<5-8>{$\{\alert<5,8>{\dfnode{f}{2}}\}$}\only<9->{$\{\}$}
+        \only<1>{$\{\alert{\dfnode{<root>}{0}}\}$}\only<2-5>{$\{\}$}\only<6>{$\{\alert<6>{\dfnode{f}{2}, \dfnode{<root>}{0}}\}$}\only<7,8>{$\{\alert<7,8>{\dfnode{f}{2}}\}$}\only<9->{$\{\}$}
       \end{column}
     \end{columns}
   \end{overprint}
 \end{frame}
 
-\section{End}
+\begin{frame}[fragile]{Implementation}
+  \begin{itemize}
+    \item Hide iteration strategy behind \hs{TransferFunction} monad
+    \item Data-flow nodes \hs{k}, denoting lattice \hs{v}
+    \item Single `impure' primitive \hs{dependOn}
+  \end{itemize}
+  \begin{center}
+    \begin{minipage}{0.9\textwidth}
+      \begin{haskell}
+        data TransferFunction k v a
+        instance Monad (TransferFunction k v)
+
+        dependOn
+          :: Ord k
+          => k
+          -> TransferFunction k v (Maybe v)
+      \end{haskell}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Implementation}
+  \begin{itemize}
+    \item \hs{DataFlowFramework} assigns \hs{TransferFunction} and \hs{ChangeDetector} to nodes
+  \end{itemize}
+  \begin{center}
+    \begin{minipage}{0.9\textwidth}
+      \begin{haskell}
+        type ChangeDetector k v
+          = k -> v -> v -> Bool
+
+        data DataFlowFramework k v 
+          = DFF 
+          { transfer      :: k -> TransferFunction k v v
+          , detectChanges :: k -> ChangeDetector k v
+          }
+      \end{haskell}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Implementation}
+  \begin{itemize}
+    \item \hs{runFramework} solves data-flow problems 
+    \item Specification as \hs{DataFlowFramework}
+    \item Implements iteration strategy
+      \begin{itemize}
+        \item Can use worklist algorithm, starting from a specified root set
+      \end{itemize}
+  \end{itemize}
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+      \begin{haskell}
+        runFramework
+          :: Ord k
+          => DataFlowFramework k v
+          -> Set k
+          -> Map k v
+      \end{haskell}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Applied to Strictness Analysis}
+  \begin{itemize}
+    \item Denote expressions by their strictness transformer
+    \item Model points of strictness transformer separately
+    \item Instantiate as \hs{DataFlowFramework (ExprNode, Arity) StrType}
+    \item \hs{ExprNode}: Totally ordered, allocated as needed
+      \begin{itemize}
+        \item Dictates priority in worklist
+        \item Performance depends on suitable priorities
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Comparison to \texttt{hoopl}}
+  \begin{itemize}
+    \item \texttt{hoopl} \parencite{hoopl} works on CFGs
+      \begin{itemize}
+        \item Our data-flow graph is implicit in functions/closures
+      \end{itemize}
+    \item Designed for imperative languages
+    \item `Operational' rather than `denotational'
+      \begin{itemize}
+        \item Control-flow rather than data-flow
+      \end{itemize}
+    \item Makes (join semi-)lattice explicit
+      \begin{itemize}
+        \item We should, too!
+      \end{itemize}
+    \item Also includes a solution for transformations
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+  \begin{itemize}
+    \item[\cmark] Goal: Decouple analysis logic from iteration logic by a graph-based approach
+    \item[\xmark] Coupling not as painful as it would be in imperative programs
+    \item[\cmark] Still obscures intent, even obstructs ideas
+    \item[\cmark] Caching of analysis results as in \textcite{dmd} between iterations for free
+    \item[\xmark] Unclear how performance is affected
+    \item[\xmark] Can only shine if shared concerns are actually extracted
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bibliography} 
+  \printbibliography
+\end{frame}
+
+\section{Backup}
+
+\begin{frame}[fragile]{Example}
+  \begin{overprint}
+    \begin{columns}
+      \begin{column}{0.35\textwidth}
+        \begin{overprint}
+          \onslide<1>
+          \begin{haskell}
+            let f 0 = const 0
+                f 1 = id 
+                f n = f (n `mod` 2)
+            in f x y
+          \end{haskell}
+          \onslide<2->
+          \begin{haskell}
+            let f 0 = const 0
+                f 1 = id 
+                f n = f (n `mod` 2)
+            in seq (f x) (f x y)
+          \end{haskell}
+        \end{overprint}
+      \end{column}
+      \begin{column}{0.02\textwidth}
+        {\Huge$\Rightarrow$}
+      \end{column}
+      \begin{column}{0.4\textwidth}
+        \begin{tikzpicture}[->, thick]
+          \useasboundingbox (-1,-2) rectangle (4,2);
+          \node[n] at (0,0) (root) {$\dfnode{<root>}{0}$};
+          \foreach \i in {-0.05,0,0.05} {
+            \node<-2>[n] at (3,0) (fx) [xshift=\i cm, yshift=-\i cm] {$\dfnode{f}{n}$};
+          }
+          \node[n, visible on=<3->] at (3,1.5) (f1) {$\dfnode{f}{1}$};
+          \node[n, visible on=<3->] at (3,-1.5) (f2) {$\dfnode{f}{2}$};
+          \draw<3-> 
+            (root) edge [bend left] (f1)
+            (root) edge [bend right] (f2)
+            (f1) edge [bend left] (f2)
+            (f2) edge [loop, in=-80, out=-40, looseness=5] (f2);
+        \end{tikzpicture}
+      \end{column}
+    \end{columns}
+  \end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]{Implementation: Behind the Curtain}
+  \begin{itemize}
+    \item \hs{TransferFunction} is a \hs{State} monad around \hs{WorklistState}
+  \end{itemize}
+  \begin{center}
+    \begin{minipage}{0.8\textwidth}
+      \begin{haskell}
+        data TransferFunction node lattice a
+          = TFM (State (WorklistState node lattice ) a)
+          deriving (Functor, Applicative, Monad)
+      \end{haskell}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Threading annotated expressions}
+  \begin{itemize}
+    \item Annotated \hs{CoreExpr}s are the reason why we do this!
+    \item Thread it through all nodes: \hs{DataFlowFramework (ExprNode, Arity) (StrType, CoreExpr)}
+    \item Complicates change detection
+      \begin{itemize}
+        \item Expressions follow AST structure
+        \item Possibly change when strictness type did not
+        \item \hs{ChangeDetector} has to check set of changed dependencies
+      \end{itemize}
+    \item $\sStr \Coloneqq S \mid L$ not enough for annotating functions
+      \begin{itemize}
+        \item $\sStr \Coloneqq S^n \mid L$ with arity $n\in \mathbb{N}$
+        \item `\hs{f} was called at least once, with at least $n$ arguments'
+      \end{itemize}
+    \item ... Or do it as the Demand Analyser does: Assume manifest arity for annotation
+      \begin{itemize}
+        \item Be careful not to inline unsaturated wrappers!
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
 \end{document}

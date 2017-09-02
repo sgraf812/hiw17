@@ -47,6 +47,16 @@
   },
 }
 
+% node style
+
+\tikzstyle{n}=[%
+  fill=white,
+  draw,
+  circle,
+  inner sep=0pt,
+  minimum size=1.5cm
+]
+
 %%% Typographic defs
 
 % From https://stackoverflow.com/a/39363004/388010
@@ -72,7 +82,7 @@
 %%% Minted for syntax highlighting
 
 \newmintinline[hs]{haskell}{}
-\newminted[haskell]{haskell}{linenos,mathescape,texcomments,autogobble}
+\newminted[haskell]{haskell}{mathescape,texcomments,autogobble}
 
 %%% Data-flow nodes
 
