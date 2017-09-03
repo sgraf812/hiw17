@@ -181,3 +181,50 @@ Solving Data-flow problems in syntax trees
 
 # Comparison to hoopl
 
+- Everything that does data-flow analysis in a Haskell should compare to hoopl  
+  - For anyone unaware, hoopl stands for 'higher-order optimisation library'
+  - is used in GHC's Cmm backend  
+- hoopl works on ordinary CFGs  
+  - For the better or the worse, our approach is much less restrictive
+  - Could allocate a node per subexpression or just the minimal number of nodes to break cycles
+  - Edges are implicit in the DSL through calls to `dependOn`
+  - Number of nodes more or less transparent to the logic
+  - Allocation of more nodes results in higher degrees of caching but also more book-keeping
+- designed to handle imperative languages, hence CFG  
+  - whereas our approach is explicitly targeted at expression languages
+- In the same veign: hoopl is a rather operational model  
+  - Inputs flow into the begin of the basic block, through all instructions and out of the basic block
+  - Our approach is more of a denotational, giving meaning to a composite expression from its parts in some domain  
+- Also, hoopl makes the join-semilattice explicit  
+  - which is probably a good thing to do in order to share more analysis logic
+- Finally, hoopl is also concerned with a solution for transformations  
+  - something we currently ignore
+  - messes with allocated nodes and their priorities
+
+# Discussion
+
+- Now for some pros and cons of my approach
+- From the plain standpoint of software engineering, separating analysis logic from iteration logic seems like the right thing to do
+- Although on the other hand, the coupling currently present in GHC's analysis is not as bad as when whipping up imperative analyses from scratch
+- The interaction of different abstraction layers still obscures intent  
+  - 'Is this relevant to analysis logic or just part of fixed-point iteration?'
+- As we saw earlier with the call context example, expressing analysis logic and iteration logic as a single iterated tree traversal also makes some ideas impossible to pursue
+- Also, optimisations to fixed-point iteration and other 'hacks', such as caching of analysis results between iterations, are encoded in the very nature of data-flow analysis  
+  - Iterating bindings in a certain order is abstracted in the worklist
+- It is unclear how compiler performance will be affected  
+  - Needs quite some book-keeping to update graph nodes and check for changes
+  - On the other hand, it promises even better caching and better asymptotics
+  - We can't really tell until we measure
+- Of course, extracting the shared concerns can only really shine if a number of analyses use this model
+
+# Conclusion
+
+- To wrap up
+- I pitched what I found to be an interesting idea that came out of my thesis
+- The theme was to separate specification of analysis logic from computing the solution of the underlying data-flow problem
+- We saw an example for how the solver would compute a stable solution by iterating the data-flow graph
+- Apologies if this was all a bit vague, but I have very concrete plans for the future:  
+  1. First, recall that for strictness analysis, we denoted expressions by their strictness transformer, which is a monotone function. Currently, we don't model that at all. What is needed for that to happen, is a map data-structure that is indexed by a partial order, so that we can have arbitrary lattices as keys. You can track my work in this repository
+  2. If we have the appropriate data-structure, we need to find a proper way to integrate it into the API. We also need ways to express abortion and other frequent analysis hacks. After some polishing, I plan to actually publish it on hackage
+  3. Finally, we can testdrive it in different analyses within GHC and measure how it affects compiler performance
+- Even if performance turns out to be bad, I think the approach is probably worth to be considered in hobby projects or when prototyping

@@ -365,34 +365,49 @@
   \begin{itemize}
     \item \texttt{hoopl} \parencite{hoopl} works on CFGs
       \begin{itemize}
-        \item Our data-flow graph is implicit in functions/closures
+        \item Our data-flow graph is much less restrictive
+        \item Edges implicit in DSL 
       \end{itemize}
     \item Designed for imperative languages
     \item `Operational' rather than `denotational'
       \begin{itemize}
-        \item Control-flow rather than data-flow
+        \item Analysis along control-flow rather than data-flow
       \end{itemize}
-    \item Makes (join semi-)lattice explicit
+    \item Makes (join-semi)lattice explicit
       \begin{itemize}
-        \item We should, too!
+        \item TODO
       \end{itemize}
     \item Also includes a solution for transformations
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Conclusion}
+\begin{frame}{Discussion}
   \begin{itemize}
-    \item[\cmark] Goal: Decouple analysis logic from iteration logic by a graph-based approach
+    \item[\cmark] Decouple analysis logic from iteration logic by a graph-based approach
     \item[\xmark] Coupling not as painful as it would be in imperative programs
     \item[\cmark] Still obscures intent, even obstructs ideas
-    \item[\cmark] Caching of analysis results as in \textcite{dmd} between iterations for free
+    \item[\cmark] `Hacks' such as caching of analysis results as in \textcite[§9.2]{dmd} between iterations for free
     \item[\xmark] Unclear how performance is affected
-    \item[\xmark] Can only shine if shared concerns are actually extracted
+    \item[\xmark] Can only shine if shared concerns are actually extracted from a number of analyses
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+  \begin{itemize}
+    \item Pitched an interesting idea that came out of my thesis
+    \item Separate \emph{specification} of the data-flow problem from computing its \emph{solution}
+    \item Graph-based abstraction, single solver
+    \item Future Work:
+      \begin{enumerate}
+        \item Monotone maps with partially-ordered keys\footnote{\url{https://github.com/sgraf812/pomaps/}}
+        \item Polish API, make a package
+        \item Testdrive and measure it in GHC
+      \end{enumerate}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Bibliography} 
-  \printbibliography
+  \printbibliography[heading=none]
 \end{frame}
 
 \section{Backup}
