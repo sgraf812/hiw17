@@ -308,7 +308,7 @@
 
 \begin{frame}[fragile]{Implementation}
   \begin{itemize}
-    \item \hs{DataFlowFramework} assigns \hs{TransferFunction} and \hs{ChangeDetector} to nodes
+    \item \hs{DataFlowProblem} assigns \hs{TransferFunction} and \hs{ChangeDetector} to nodes
   \end{itemize}
   \begin{center}
     \begin{minipage}{0.9\textwidth}
@@ -316,8 +316,8 @@
         type ChangeDetector k v
           = k -> v -> v -> Bool
 
-        data DataFlowFramework k v 
-          = DFF 
+        data DataFlowProblem k v 
+          = DFP 
           { transfer      :: k -> TransferFunction k v v
           , detectChanges :: k -> ChangeDetector k v
           }
@@ -328,9 +328,9 @@
 
 \begin{frame}[fragile]{Implementation}
   \begin{itemize}
-    \item \hs{runFramework} solves data-flow problems 
-    \item Specification as \hs{DataFlowFramework}
-    \item Implements iteration strategy
+    \item \hs{fixProblem} solves data-flow problems 
+    \item Specification as \hs{DataFlowProblem}
+    \item Implements fixed-point iteration strategy
       \begin{itemize}
         \item Can use worklist algorithm, starting from a specified root set
       \end{itemize}
@@ -338,9 +338,9 @@
   \begin{center}
     \begin{minipage}{0.5\textwidth}
       \begin{haskell}
-        runFramework
+        fixProblem
           :: Ord k
-          => DataFlowFramework k v
+          => DataFlowProblem k v
           -> Set k
           -> Map k v
       \end{haskell}
@@ -352,7 +352,7 @@
   \begin{itemize}
     \item Denote expressions by their strictness transformer
     \item Model points of strictness transformer separately
-    \item Instantiate as \hs{DataFlowFramework (ExprNode, Arity) StrType}
+    \item Instantiate as \hs{DataFlowProblem (ExprNode, Arity) StrType}
     \item \hs{ExprNode}: Totally ordered, allocated as needed
       \begin{itemize}
         \item Dictates priority in worklist
@@ -474,7 +474,7 @@
 \begin{frame}[fragile]{Threading annotated expressions}
   \begin{itemize}
     \item Annotated \hs{CoreExpr}s are the reason why we do this!
-    \item Thread it through all nodes: \hs{DataFlowFramework (ExprNode, Arity) (StrType, CoreExpr)}
+    \item Thread it through all nodes: \hs{DataFlowProblem (ExprNode, Arity) (StrType, CoreExpr)}
     \item Complicates change detection
       \begin{itemize}
         \item Expressions follow AST structure
