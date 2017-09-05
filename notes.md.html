@@ -4,6 +4,7 @@ Solving Data-flow problems in syntax trees
 
 # First slide
 
+- (0:23)
 - Thanks for having me here and for this great opportunity to give a talk
 - I'm ...
 - originally, I planned to talk about my recently finished master's thesis
@@ -12,7 +13,7 @@ Solving Data-flow problems in syntax trees
 
 # Introduction
 
-- 2 minutes
+- 2 minutes (1:17)
 - So, what exactly was my thesis about?
 - Two analyses in GHC, CA and DA, that overlap in concerns
 - I extracted overlapping logic into a combined Usage Analysis generalising CA and its counterpart in DA
@@ -28,7 +29,7 @@ Solving Data-flow problems in syntax trees
 
 # Strictness Analysis
 
-- 1 minute
+- 1 minute (1:07)
 - provides lower bounds on *evaluation cardinality*
 - Specifically, it answers the question of which variables are evaluated at least once
 - Answer to that captured in a property called the variables strictness
@@ -43,10 +44,10 @@ Solving Data-flow problems in syntax trees
 
 # GHC's Demand Analyser
 
-- 1 minute
+- 1 minute (0:46)
 - GHC performs strictness analysis in its Demand Analyser
 - Strictness annotations are most important for the worker/wrapper transformation, which is responsible for unboxing
-- It works by:  
+- Demand Analysis works by:  
   - Finding out, for each expression, which free variables are used strictly 
   - and for each function which arguments are used strictly
 - Analysis information is captured in an expression's strictness type:  
@@ -55,28 +56,29 @@ Solving Data-flow problems in syntax trees
 
 # Strictness signatures
 
-- 1-2 minutes
+- 1 minute (0:58)
 - Interesting to see how a Strictness Analysis in the style of the Demand Analyser handles let-bindings
-- All bindings are annotated with their strictness signature
+- Demand Analysis annotates bindings with their strictness signature
 - This is the signature for `const`
 - We see that `const` does nothing interesting with free variables
 - but uses its first argument strictly, whereas its second argument is not used at all and thus lazily
-- At the call site we can unleash `const`s strictness type stored in the signature to see that `y` is used strictly and the `error` term is not
-- In order to have the strictness signature available at call sites, we have to analyse the RHS before the body
+- At the call site we can unleash the strictness type stored in `const`s signature to see that `y` is used strictly and the `error` term is not
+- Now, the critical part is that
+- In order to have the strictness signature available at call sites, we have to analyse the RHS of the binding before the let body
 
 # Call Context matters 1
 
-- 2 minutes
+- 2 minutes (2:30)
 - This restriction is unfortunate in cases like this
 - We'll focus on the free variable `z` here
-- `f2` is called with two arguments
+- `f` is called with two arguments
 - So the whole expression is strict in `z`
 - Our strictness analysis fails to recognise this
-- In order to have *some* signature available in the body, our analysis only computes the signature of `f2` for manifest arity 1 (the number of leading lambdas)
+- In order to have *some* signature available in the body, our analysis only computes the signature of `f` for manifest arity 1 (the number of leading lambdas)
 - Not enough information to look under the inner lambda bindings
 - Has to be conservative and assume `z` to be used lazily
-- Because of `seq` it may well be that a call to `f2` does not evaluate `z` at all
-- But in the body, `f2` is only ever called with two arguments
+- Because of `seq` it may well be that a call to `f` does not evaluate `z` at all
+- But in the body, `f` is only ever called with two arguments
 - If we had known that we could have computed a more precise signature for that case
 
 # Call Context matters 2
@@ -85,7 +87,7 @@ Solving Data-flow problems in syntax trees
 - The solution is to postpone analysis of the RHS until incoming arity is known
 - In this case:  
   - Go straight into the body
-  - handle the call to `f2` by analysing its RHS with the incoming arity 2
+  - handle the call to `f` by analysing its RHS with the incoming arity 2
   - In the resulting 'signature', `z` is detected as used strictly
 - Formally, what we are doing here is, we approximate the *strictness transformer* of the RHS in finitely many points  
 - The strictness transformer of an expression maps incoming arity to the appropriate strictness type
@@ -93,7 +95,7 @@ Solving Data-flow problems in syntax trees
 
 # Recursion
 
-- 1 minute
+- 1 minute (1:12)
 - Turns out that this completely breaks down when handling recursive bindings
 - To compute the strictness type of the `fac`torial function called with one argument, we need the strictness type `fac` called with one argument
 - So I rediscovered fixed-point iteration, only that iteration order is no longer dictated by syntactic structure
@@ -103,7 +105,7 @@ Solving Data-flow problems in syntax trees
 
 # Data-flow Graph for Strictness Analysis 1
 
-- 4 minute
+- 4 minutes (4:30)
 - How does this look, conceptually?
 - What nodes must be present in the graph we model the problem with?
 - We need one root node denoting the whole expression
@@ -120,13 +122,13 @@ Solving Data-flow problems in syntax trees
   - So analysis directly descends into the node, resembling depth-first search
   - This makes sure that we discover the set of reachable nodes as quick as possible
 1. `f` recurses into itself in one of its branches  
-  - It does so with two arguments, as we analyse the branch under the assumption of one additional argument
+  - It does so with two arguments, as we analyse under the assumption of incoming arity two
 1. Our 'callstack' already contains `f2`  
   - In order to break the dependency cycle, analysis doesn't recurse again
   - Instead we assume the most optimistic strictness type possible
   - which in this case corresponds to the following strictness type
 1. We note that `f2` depended on an unstable $\bot$ value by adding it to the worklist
-1. Under this assumption we can join together the results from all three case branches  
+1. Under the assumption of this strictness type for the recursive case, we can join together the results from all three case branches  
   - In the first branch, `f` is lazy in the second argument because of the call to `const`!
   - Put together, we can update `f2`s node with this strictness type, that says
 1. With this potentially unstable approximation we jump back into the root node  
@@ -145,8 +147,8 @@ Solving Data-flow problems in syntax trees
 
 # Implementation 1
 
-- 3-4 minutes
-- That's how we want to look things conceptually
+- 3-4 minutes (2:59)
+- That's how we want to look things on the drawing board
 - How do we model this elegantly in Haskell?
 - My approach was to hide the iteration strategy behind an abstract `TransferFunction` monad  
   - Parameterized by `k`, the type of nodes, and `v`, the denoting lattice
@@ -154,7 +156,7 @@ Solving Data-flow problems in syntax trees
   - Expresses a dependency on the node given as the first parameter
   - Returns just the current value of the node
   - Or `Nothing` if its value is currently $\bot$ and the iteration strategy decided to break a cycle
-  - In absence of any cycles, the current iteration strategy just performs a single depth-first traversal
+  - In absence of any cycles, the employed iteration strategy just performs a single depth-first traversal
 - So that's how we specify a single transfer function
 
 # Implementation 2
@@ -172,8 +174,10 @@ Solving Data-flow problems in syntax trees
 - `fixProblem` is an interpreter for `DataFlowProblem`s which computes a solution
 - It captures a certain iteration strategy
 - In our specific case:  
-  - Depth-first traversal to discover all reachable nodes (e.g. the call graph)
-  - Iterate all nodes in the work list until they are stable
+  - Big picture: Iterate all nodes in the work list until they are stable
+  - Small tweak: Whenever we hit a $\bot$ node, we analyse it first
+  - On the initial graph, where all nodes are $\bot$, it's more like a 
+  - Depth-first traversal to discover the set of reachable nodes (e.g. the call graph)
   - nodes end up in the worklist either because of broken cycles or because some dependency changed
 - The `fixProblem` function gets passed the `DataFlowProblem` as well as the initial worklist
 - The result is a map from nodes to stable denotations  
@@ -181,6 +185,7 @@ Solving Data-flow problems in syntax trees
 
 # Applied to Strictness Analysis
 
+- (1:13)
 - When applied to strictness analysis, we want to denote expressions by their strictness transformer  
   - that was the map from incoming arity to the corresponding strictness type
 - As we saw in the earlier example, we model the strictness transformer point-wise  
@@ -193,7 +198,7 @@ Solving Data-flow problems in syntax trees
 
 # Comparison to hoopl
 
-- 2 minutes
+- 2 minutes (2:13)
 - Everything that does data-flow analysis in Haskell should compare to hoopl  
   - For anyone unaware, hoopl stands for 'higher-order optimisation library'
   - is used in GHC's Cmm backend  
@@ -203,7 +208,7 @@ Solving Data-flow problems in syntax trees
   - Could also allocate a node per subexpression
   - Number of nodes more or less transparent to the analysis logic
   - Allocation of more nodes results in higher degrees of caching but also more book-keeping
-  - Edges are implicit in the DSL through calls to `dependOn`
+  - Edges are declared in code through calls to `dependOn`
   - discovered as transfer functions are executed
 - designed to handle imperative languages, hence CFG  
   - whereas our approach is explicitly targeted at expression languages
@@ -211,14 +216,15 @@ Solving Data-flow problems in syntax trees
   - Inputs flow into the begin of the basic block, through all instructions and out of the basic block
   - Our approach is more denotational, giving meaning to a composite expression from its parts in some semantic domain  
 - Also, hoopl makes the join-semilattice explicit  
-  - which is probably a good thing to do in order to share more analysis logic
+  - in having the user specify a bottom value and a join operation
+  - which we should probably do too in order to share more analysis logic
 - Finally, hoopl is also concerned with a solution for transformations or rewrites 
   - something we currently ignore
   - messes with allocated nodes and their priorities
 
 # Discussion
 
-- 2 minutes
+- 2 minutes (1:44)
 - Now for some pros and cons of my approach
 - From the plain standpoint of software engineering, separating analysis logic from iteration logic seems like the right thing to do
 - Although on the other hand, the coupling currently present in GHC's analysis is not as bad as when whipping up imperative analyses from scratch
@@ -236,14 +242,14 @@ Solving Data-flow problems in syntax trees
 
 # Conclusion
 
-- 1-2 minutes
+- 1-2 minutes (1:33)
 - To wrap up
 - I pitched what I found to be an interesting idea that came out of my thesis
 - The theme was to separate specification of analysis logic from computing the solution of the underlying data-flow problem
 - We saw an example for how the solver would compute a stable solution by iterating the data-flow graph
 - Apologies if this was all a bit vague, but I have very concrete plans for the future:  
   1. First, recall that for strictness analysis, we denoted expressions by their strictness transformer, which is a monotone function. Currently, we don't take advantage of that at all. What is needed for that to happen, is a map data-structure that is indexed by a partial order, so that we can have arbitrary lattices as keys. You can track my work in this repository
-  2. When we have the appropriate data-structure, we need to find a proper way to integrate it into the API. We also need ways to express abortion and other frequent analysis hacks. After some polishing, I plan to actually publish it on hackage
+  2. When we have the right data-structure, we need to find a proper way to integrate it into the API. We also need ways to express abortion and other frequent analysis hacks. After some polishing, I plan to actually publish it on hackage
   3. Finally, we can testdrive it in different analyses within GHC and measure how it affects compiler performance
 - Even if performance turns out to be bad, I think the approach is probably worth to be considered in hobby projects or when prototyping
 
