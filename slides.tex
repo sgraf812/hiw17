@@ -1,6 +1,6 @@
 \documentclass{haskellbeamer}
 
-\title{Solving Data-flow Problems in Syntax Trees}
+\title{Fixing Data-flow Problems in Syntax Trees}
 \date{September 9, 2017}
 
 \bibliography{bibliography.bib}
@@ -415,20 +415,22 @@
 \begin{frame}[fragile]{Example}
   \begin{overprint}
     \begin{columns}
-      \begin{column}{0.35\textwidth}
+      \begin{column}{0.4\textwidth}
         \begin{overprint}
           \onslide<1>
           \begin{haskell}
             let f 0 = const 0
                 f 1 = id 
-                f n = f (n `mod` 2)
+                f n = 
+                  const (f (n `mod` 2) 4)
             in f x y
           \end{haskell}
           \onslide<2->
           \begin{haskell}
             let f 0 = const 0
                 f 1 = id 
-                f n = f (n `mod` 2)
+                f n = 
+                  const (f (n `mod` 2) 4)
             in seq (f x) (f x y)
           \end{haskell}
         \end{overprint}
@@ -491,6 +493,24 @@
         \item Be careful not to inline unsaturated wrappers!
       \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Caching of Analysis Results due to Henglein}
+  \begin{center}
+    \begin{minipage}{0.8\textwidth}
+      \begin{haskell}
+        let f x =
+              let g y = 
+                    if odd y 
+                      then g (y - 1) 
+                      else x
+              in if even x 
+                  then g x 
+                  else f (3*x + 1)
+        in f 7
+      \end{haskell}
+    \end{minipage}
+  \end{center}
 \end{frame}
 
 \end{document}
