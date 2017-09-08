@@ -314,7 +314,7 @@
     \begin{minipage}{0.9\textwidth}
       \begin{haskell}
         type ChangeDetector k v
-          = k -> v -> v -> Bool
+          = v -> v -> Bool
 
         data DataFlowProblem k v 
           = DFP 
@@ -365,13 +365,14 @@
   \begin{itemize}
     \item \texttt{hoopl} \parencite{hoopl} works on CFGs
       \begin{itemize}
-        \item Our data-flow graph is much less restrictive
+        \item Data-flow Graph
+        \item Basic blocks vs. transfer functions
         \item Edges implicit in DSL 
       \end{itemize}
-    \item Designed for imperative languages
+    \item Imperative languages vs. declarative languages
     \item `Operational' rather than `denotational'
       \begin{itemize}
-        \item Analysis along control-flow rather than data-flow
+        \item Small-step vs. compositional
       \end{itemize}
     \item Makes (join-semi)lattice explicit
       \begin{itemize}
@@ -395,15 +396,23 @@
 \begin{frame}{Conclusion}
   \begin{itemize}
     \item Pitched an interesting idea that came out of my thesis
-    \item Separate \emph{specification} of the data-flow problem from computing its \emph{solution}
-    \item Graph-based abstraction, single solver
+    \item Separate \emph{specification} of data-flow problems from computing its \emph{solution}
+    \item Unobtrusive monadic DSL
     \item Future Work:
       \begin{enumerate}
-        \item Monotone maps with partially-ordered keys\footnote{\url{https://github.com/sgraf812/pomaps/}}
-        \item Polish API, make a package
+        \item (Monotone) maps with partially-ordered keys\footnote{\tiny\url{https://github.com/sgraf812/pomaps/}}
+        \item Polish API, make a package\footnote{\tiny\url{https://github.com/sgraf812/datafix}}
         \item Testdrive and measure it in GHC
       \end{enumerate}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Done}
+  \begin{center}
+    \includegraphics[width=5cm]{qr.jpg}
+    \\
+    \small\url{https://rawgit.com/sgraf812/hiw17/master/slides.pdf}
+  \end{center}
 \end{frame}
 
 \begin{frame}{Bibliography} 
