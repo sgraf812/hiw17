@@ -1,7 +1,7 @@
 \LoadClass{beamer}
 
 \usetheme{metropolis}
-\author{Sebastian Graf}
+\author{Sebastian Graf, \small\texttt{sgraf1337@gmail.com}}
 \institute{Karlsruhe Institute of Technology}
 
 \RequirePackage[utf8]{inputenc}
